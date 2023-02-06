@@ -2,17 +2,39 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
 	"regexp"
 )
 
 // home will write a byte slice and serve as the homepage
 func home(w http.ResponseWriter, r *http.Request) {
+	// Check to see if the URL from user is anything but a slash
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
-	w.Write([]byte("Hello from JobAIO"))
+
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+	}
+
+	// Parse the template and check for errors
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
+	// Serve the home page template
+	err = ts.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+	}
 }
 
 // alphaNumeric will check the URL query paramter to ensure only alphanumberic characters are present
