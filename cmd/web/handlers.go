@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 )
 
-// home will write a byte slice
+// home will write a byte slice and serve as the homepage
 func home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -41,17 +40,4 @@ func requestCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("Request a new company here"))
-}
-func main() {
-
-	// create a new servemux and register the home function to act as the handler
-	// for the "/" URL pattern.
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/company", showCompany)
-	mux.HandleFunc("/company/request", requestCompany)
-
-	log.Println("Starting server on :4000")
-	err := http.ListenAndServe(":4000", mux)
-	log.Fatal(err)
 }
