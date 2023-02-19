@@ -30,7 +30,7 @@ func (app *application) readNameParam(r *http.Request) (string, error) {
 // writeJSON is a helper function which will iterate through the data passed and convert it into
 // a JSON object to return.
 func (app *application) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
-	js, err := json.Marshal(data)
+	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}
