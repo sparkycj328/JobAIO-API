@@ -10,16 +10,19 @@ import (
 func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// create a local copy of the company struct which will store the request body
-	s := data.Company{}
+	var input struct {
+		Name      string         `json:"company"`   // company name
+		Countries []data.Country `json:"countries"` // job postings
+	}
 
 	// decode the request body
-	err := app.readJSON(w, r, &s)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", s)
+	fmt.Fprintf(w, "%+v", input)
 }
 
 // showCompanyHandler will display the job information for the specified company
