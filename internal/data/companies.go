@@ -24,6 +24,16 @@ func ValidateCompany(v *validator.Validator, company *Company) {
 	v.Check(len(company.Name) <= 100, "name", "must not be more than 100 bytes long")
 
 	for _, country := range company.Countries {
-		v.Check(country.Total < 0, "amount", "must be greater than 0")
+		v.Check(country.Country != "", "country", "must be provided")
+		v.Check(len(country.Country) <= 100, "country", "must not be more than 100 bytes long")
+
+		v.Check(country.Total < 0, "amount", "cannot be a negative number")
+
+		v.Check(country.URL != "", "url", "must be provided")
+		v.Check(len(country.URL) <= 100, "url", "must not be more than 200 bytes long")
+
+		v.Check(country.CreatedAt.Before(time.Now()) || country.CreatedAt.After(time.Now()), "created",
+			"must be equal to today's date")
+
 	}
 }
