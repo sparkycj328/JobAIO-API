@@ -42,6 +42,13 @@ func main() {
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
+	// call openDB and defer the db from closing until main finishes
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer db.Close()
+
 	// declares an instance of the application struct
 	app := &application{
 		config: cfg,
@@ -57,7 +64,7 @@ func main() {
 	}
 
 	logger.Printf("Starting %s server on %s", cfg.env, srv.Addr)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	logger.Fatal(err)
 }
 
