@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -35,6 +37,7 @@ func main() {
 	// read flag values into config struct
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)\"")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("VENDORS_DB_DSN"), "Database connection")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -56,4 +59,24 @@ func main() {
 	logger.Printf("Starting %s server on %s", cfg.env, srv.Addr)
 	err := srv.ListenAndServe()
 	logger.Fatal(err)
+}
+
+// openDB will open the designated db based on the dsn
+// it will then ping the db and return it if no errors occurred
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("psql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Establish a new connection and if connection takes longer than 5 seconds
+	// then the context will cancel and return an error
+	if err := db.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
