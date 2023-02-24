@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/sparkycj328/JobAIO-API/internal/data"
+	"github.com/sparkycj328/JobAIO-API/internal/validator"
 	"net/http"
-	"time"
 )
 
 // createCompanyHandler will insert job postings into the database based on the company name
@@ -11,20 +12,26 @@ func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 	// create a local copy of the company struct which will store the request body
 	var input struct {
-		Name      string `json:"company"` // company name
-		Countries []struct {
-			ID        int64     `json:"id"`      // Unique integer id for the company
-			Country   string    `json:"country"` // Country name
-			Total     int       `json:"total"`   // total amount of job available
-			URL       string    `json:"url"`     // URL location where resource is located
-			CreatedAt time.Time `json:"created"` // created timestamp for the data
-		} `json:"countries"` // job postings
+		Name      string           `json:"company"`   // company name
+		Countries []data.Countries `json:"countries"` // job postings
 	}
 
 	// decode the request body
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	company := &data.Company{
+		Name:      input.Name,
+		Countries: input.Countries,
+	}
+
+	// Initialize a new validator
+	v := validator.New()
+	if data.ValidateCompany(v, company); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
