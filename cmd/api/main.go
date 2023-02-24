@@ -63,8 +63,8 @@ func main() {
 
 // openDB will open the designated db based on the dsn
 // it will then ping the db and return it if no errors occurred
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("psql", dsn)
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("psql", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}
