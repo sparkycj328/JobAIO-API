@@ -1,1 +1,0 @@
-ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_amount_check;

@@ -1,1 +1,0 @@
-ALTER TABLE jobs ADD CONSTRAINT jobs_amount_check CHECK (amount >=0);

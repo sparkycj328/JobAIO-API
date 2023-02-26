@@ -4,5 +4,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     vendor text NOT NULL,
     country text NOT NULL,
     amount integer NOT NULL,
-    url text NOT NULL,
-    );
+    url text NOT NULL
+);
+
+ALTER TABLE jobs ADD CONSTRAINT jobs_amount_check CHECK (amount >=0);
