@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"github.com/sparkycj328/JobAIO-API/internal/validator"
 	"time"
 )
@@ -32,4 +33,32 @@ func ValidateCompany(v *validator.Validator, company *Company) {
 		v.Check(country.URL != "", "url", "must be provided")
 		v.Check(len(country.URL) <= 100, "url", "must not be more than 200 bytes long")
 	}
+}
+
+// VendorModel wraps the sql.DB connection pool in a struct
+type VendorModel struct {
+	DB *sql.DB
+}
+
+// Insert will take the company struct and insert the data into our database
+func (m *VendorModel) Insert(c *Company) error {
+
+	return nil
+}
+
+// GetRows will for fetching specific records from the jobs table
+func (m *VendorModel) GetRows(vendor string) (*Company, error) {
+
+	return nil, nil
+}
+
+// Update will update the specified records in the job table
+func (m *VendorModel) Update(c *Company) error {
+
+	return nil
+}
+
+func (m *VendorModel) Delete(vendor string) error {
+
+	return nil
 }
