@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/sparkycj328/JobAIO-API/internal/data"
 	"log"
 	"net/http"
 	"os"
@@ -32,6 +33,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -59,9 +61,11 @@ func main() {
 	defer db.Close()
 
 	// declares an instance of the application struct
+	// passes it our config, logger, and the database connection pool
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModel(db),
 	}
 
 	// declares an instance of an http Server where we can use the router

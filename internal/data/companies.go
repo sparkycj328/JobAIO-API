@@ -7,11 +7,7 @@ import (
 )
 
 type Company struct {
-	Name      string      `json:"company"`   // company name
-	Countries []Countries `json:"countries"` // job postings
-}
-
-type Countries struct {
+	Name      string     `json:"company"`           // company name
 	ID        int64      `json:"-"`                 // Unique integer id for the company
 	Country   string     `json:"country"`           // Country name
 	Total     int        `json:"total"`             // total amount of job available
@@ -20,19 +16,14 @@ type Countries struct {
 }
 
 // ValidateCompany will perform validation checks on each
-func ValidateCompany(v *validator.Validator, company *Company) {
-	v.Check(company.Name != "", "name", "must be provided")
-	v.Check(len(company.Name) <= 100, "name", "must not be more than 100 bytes long")
-
-	for _, country := range company.Countries {
-		v.Check(country.Country != "", "country", "must be provided")
-		v.Check(len(country.Country) <= 100, "country", "must not be more than 100 bytes long")
-
-		v.Check(country.Total >= 0, "amount", "cannot be a negative number")
-
-		v.Check(country.URL != "", "url", "must be provided")
-		v.Check(len(country.URL) <= 100, "url", "must not be more than 200 bytes long")
-	}
+func ValidateCompany(v *validator.Validator, c *Company) {
+	v.Check(c.Name != "", "name", "must be provided")
+	v.Check(len(c.Name) <= 100, "name", "must not be more than 100 bytes long")
+	v.Check(c.Country != "", "country", "must be provided")
+	v.Check(len(c.Country) <= 100, "country", "must not be more than 100 bytes long")
+	v.Check(c.Total >= 0, "amount", "cannot be a negative number")
+	v.Check(c.URL != "", "url", "must be provided")
+	v.Check(len(c.URL) <= 100, "url", "must not be more than 200 bytes long")
 }
 
 // VendorModel wraps the sql.DB connection pool in a struct
@@ -42,8 +33,12 @@ type VendorModel struct {
 
 // Insert will take the company struct and insert the data into our database
 func (m *VendorModel) Insert(c *Company) error {
-
-	return nil
+	query := `
+			INSERT INTO jobs (vendor, country, amount, url)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, created_at`
+	args := []any{c.Name, c.Country, c.Total, c.URL}
+	return m.DB.QueryRow(query, args).Scan(&c.ID, &c.CreatedAt)
 }
 
 // GetRows will for fetching specific records from the jobs table
