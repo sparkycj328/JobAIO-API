@@ -38,7 +38,7 @@ func (m *VendorModel) Insert(c *Company) error {
 			VALUES ($1, $2, $3, $4)
 			RETURNING id, created_at`
 	args := []any{c.Name, c.Country, c.Total, c.URL}
-	return m.DB.QueryRow(query, args).Scan(&c.ID, &c.CreatedAt)
+	return m.DB.QueryRow(query, args...).Scan(&c.ID, &c.CreatedAt)
 }
 
 // GetRows will for fetching specific records from the jobs table

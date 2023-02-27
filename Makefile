@@ -5,3 +5,9 @@ run:
 
 psql:
 	psql ${VENDORS_DB_DSN}
+
+up:
+	migrate -path=migrations -database=$VENDORS_DB_DSN up
+
+down:
+	migrate -path=migrations -database=$VENDORS_DB_DSN down
