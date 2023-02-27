@@ -42,7 +42,22 @@ func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", input)
+	// Insert the data into the jobs table
+	if err = app.models.Vendors.Insert(company); err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Custom header declaration in order to pass the location of the records
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/companies/%s", company.Name))
+
+	// Write a JSON response with a 201 created status code, the vendor data in the response
+	// body and the Location folder
+	if err := app.writeJSON(w, http.StatusCreated, envelope{"company": company}, headers); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
 }
 
 // showCompanyHandler will display the job information for the specified company
