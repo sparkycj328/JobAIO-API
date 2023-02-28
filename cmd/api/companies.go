@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/sparkycj328/JobAIO-API/internal/data"
 	"github.com/sparkycj328/JobAIO-API/internal/validator"
@@ -67,6 +68,18 @@ func (app *application) showCompanyHandler(w http.ResponseWriter, r *http.Reques
 		app.notFoundResponse(w, r)
 		return
 	}
-	// otherwise interpolate the name parameter
-	fmt.Fprintf(w, "Show the details of %s", name)
+
+	jobs, err := app.models.Vendors.GetRows(name)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": jobs}, nil); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }

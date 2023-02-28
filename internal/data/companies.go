@@ -55,7 +55,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	// define the SQL statement
 	query := `SELECT id, created_at, vendor, country, amount, url
 		  		FROM jobs
-				WHERE vendor = $1 AND created_at = CURDATE();`
+				WHERE vendor = $1 AND created_at::date = CURRENT_DATE;`
 	rows, err := m.DB.Query(query, vendor)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	for rows.Next() {
 		country := Company{}
 
-		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Name, &country.Total, &country.URL)
+		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Name, &country.Country, &country.Total, &country.URL)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
