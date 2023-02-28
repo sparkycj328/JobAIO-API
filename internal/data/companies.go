@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/sparkycj328/JobAIO-API/internal/validator"
 	"time"
 )
@@ -42,9 +43,40 @@ func (m *VendorModel) Insert(c *Company) error {
 }
 
 // GetRows will for fetching specific records from the jobs table
-func (m *VendorModel) GetRows(vendor string) (*Company, error) {
+func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
+	// if vendor string is empty return an error
+	if vendor == "" {
+		return nil, ErrRecordNotFound
+	}
+	// define a slice of company struct which will
+	// be used to store the rows queried
+	countries := make([]Company, 0)
 
-	return nil, nil
+	// define the SQL statement
+	query := `SELECT id, created_at, vendor, country, amount, url
+		  		FROM jobs
+				WHERE vendor = $1 AND created_at = CURDATE();`
+	rows, err := m.DB.Query(query, vendor)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		country := Company{}
+
+		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Name, &country.Total, &country.URL)
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ErrRecordNotFound
+			default:
+				return nil, err
+			}
+		}
+		countries = append(countries, country)
+	}
+	return &countries, nil
 }
 
 // Update will update the specified records in the job table
