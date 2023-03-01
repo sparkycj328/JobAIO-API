@@ -8,7 +8,7 @@ import (
 )
 
 type Company struct {
-	Name      string     `json:"company"`           // company name
+	Name      string     `json:"company,omitempty"` // company name
 	ID        int64      `json:"-"`                 // Unique integer id for the company
 	Country   string     `json:"country"`           // Country name
 	Total     int        `json:"total"`             // total amount of job available
@@ -53,9 +53,9 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	countries := make([]Company, 0)
 
 	// define the SQL statement
-	query := `SELECT id, created_at, vendor, country, amount, url
+	query := `SELECT id, created_at, country, amount, url
 		  		FROM jobs
-				WHERE vendor = $1 AND created_at::date = CURRENT_DATE;`
+				WHERE vendor = $1 AND created_at::date = CURRENT_DATE AND amount > 0 ORDER BY country;`
 	rows, err := m.DB.Query(query, vendor)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	for rows.Next() {
 		country := Company{}
 
-		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Name, &country.Country, &country.Total, &country.URL)
+		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
