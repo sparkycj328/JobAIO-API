@@ -64,7 +64,26 @@ func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Requ
 // getRecordHandler will execute our single row query based on the id
 // parameter which is grabbed from the context from the request
 func (app *application) getRecordHandler(w http.ResponseWriter, r *http.Request) {
-
+	// grab the id parameter from the request url
+	id, err := app.readIdParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+	record, err := app.models.Vendors.GetRecord(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	// if no error was returned by our Get record query, write the record to JSON
+	if err := app.writeJSON(w, http.StatusOK, envelope{"record": record}, nil); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 // showCompanyHandler will display the job information for the specified company

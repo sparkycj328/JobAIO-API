@@ -8,15 +8,15 @@ import (
 )
 
 type Company struct {
-	Name      string     `json:"company,omitempty"` // company name
 	ID        int64      `json:"-"`                 // Unique integer id for the company
+	Name      string     `json:"company,omitempty"` // company name
 	Country   string     `json:"country"`           // Country name
 	Total     int        `json:"total"`             // total amount of job available
 	URL       string     `json:"url"`               // URL location where resource is located
 	CreatedAt *time.Time `json:"created,omitempty"` // created timestamp for the data
 }
 
-// ValidateCompany will perform validation checks on each
+// ValidateCompany will perform validation checks on each field of the given Company struct
 func ValidateCompany(v *validator.Validator, c *Company) {
 	v.Check(c.Name != "", "name", "must be provided")
 	v.Check(len(c.Name) <= 100, "name", "must not be more than 100 bytes long")
@@ -33,6 +33,7 @@ type VendorModel struct {
 }
 
 // Insert will take the company struct and insert the data into our database
+// acts as our POST endpoint
 func (m *VendorModel) Insert(c *Company) error {
 	query := `
 			INSERT INTO jobs (vendor, country, amount, url)
@@ -44,14 +45,39 @@ func (m *VendorModel) Insert(c *Company) error {
 
 // GetRecord queries our jobs table for an individual row
 // this row is called using the id parameter from the URL request
-func (m *VendorModel) GetRecord(id int) (*Company, error) {
+func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 
 	// one last validation check
 	if id < 1 {
 		return nil, ErrRecordNotFound
 	}
+
 	// build the single query
-	return nil, nil
+	query := `
+			SELECT id, created_at, vendor, country, amount, url
+			FROM jobs
+			WHERE id = $1`
+
+	var record Company
+
+	// query for the matching id and based on type of error
+	// return our ErrRecordNotFound error or return other error
+	if err := m.DB.QueryRow(query, id).Scan(
+		&record.ID,
+		&record.CreatedAt,
+		&record.Name,
+		&record.Country,
+		&record.Total,
+		&record.URL,
+	); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &record, nil
 }
 
 // GetRows will for fetching specific records from the jobs table
@@ -74,9 +100,13 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	}
 	defer rows.Close()
 
+	// iterate through each row returned by our query to the jobs table
 	for rows.Next() {
+		// declare a local instance of our company struct
 		country := Company{}
 
+		// scan the individual record values for the current row into our local struct
+		// based on type of error, return different error messages
 		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL)
 		if err != nil {
 			switch {
@@ -86,6 +116,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 				return nil, err
 			}
 		}
+		// append the filled struct to our slice of rows queried.
 		countries = append(countries, country)
 	}
 	return &countries, nil

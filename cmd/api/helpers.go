@@ -8,10 +8,11 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-// alphaNumeric will check the URL query paramter to ensure only alphanumberic characters are present
+// alphaNumeric will check the URL query parameter to ensure only alphanumeric characters are present
 func alphaNumeric(name string) (string, bool) {
 	return name, regexp.MustCompile(`^[a-zA-Z0-9]*$`).MatchString(name)
 }
@@ -28,6 +29,17 @@ func (app *application) readNameParam(r *http.Request) (string, error) {
 	}
 
 	return name, nil
+}
+
+func (app *application) readIdParam(r *http.Request) (int64, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	// iterate through the params slice
+	id, ok := strconv.ParseInt(params.ByName("id"), 10, 64)
+	if ok != nil || id < 1 {
+		return 0, errors.New("invalid id parameter")
+	}
+	return id, nil
 }
 
 // envelope will help to add a layer to the JSON object for additional security measures
