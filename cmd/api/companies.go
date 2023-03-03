@@ -61,6 +61,12 @@ func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
+// getRecordHandler will execute our single row query based on the id
+// parameter which is grabbed from the context from the request
+func (app *application) getRecordHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // showCompanyHandler will display the job information for the specified company
 func (app *application) showCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	name, err := app.readNameParam(r)

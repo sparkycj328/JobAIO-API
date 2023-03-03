@@ -42,6 +42,18 @@ func (m *VendorModel) Insert(c *Company) error {
 	return m.DB.QueryRow(query, args...).Scan(&c.ID, &c.CreatedAt)
 }
 
+// GetRecord queries our jobs table for an individual row
+// this row is called using the id parameter from the URL request
+func (m *VendorModel) GetRecord(id int) (*Company, error) {
+
+	// one last validation check
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+	// build the single query
+	return nil, nil
+}
+
 // GetRows will for fetching specific records from the jobs table
 func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	// if vendor string is empty return an error
