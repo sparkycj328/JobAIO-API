@@ -107,17 +107,14 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 
 		// scan the individual record values for the current row into our local struct
 		// based on type of error, return different error messages
-		err = rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL)
-		if err != nil {
-			switch {
-			case errors.Is(err, sql.ErrNoRows):
-				return nil, ErrRecordNotFound
-			default:
-				return nil, err
-			}
+		if err := rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL); err != nil {
+			return nil, err
 		}
 		// append the filled struct to our slice of rows queried.
 		countries = append(countries, country)
+	}
+	if len(countries) == 0 {
+		return nil, ErrRecordNotFound
 	}
 	return &countries, nil
 }

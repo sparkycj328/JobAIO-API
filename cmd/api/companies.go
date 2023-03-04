@@ -104,7 +104,8 @@ func (app *application) showCompanyHandler(w http.ResponseWriter, r *http.Reques
 		}
 		return
 	}
-	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": jobs}, nil); err != nil {
+
+	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": &jobs}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 }
