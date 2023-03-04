@@ -61,9 +61,9 @@ func (app *application) createCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
-// getRecordHandler will execute our single row query based on the id
+// showRecordHandler will execute our single row query based on the id
 // parameter which is grabbed from the context from the request
-func (app *application) getRecordHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) showRecordHandler(w http.ResponseWriter, r *http.Request) {
 	// grab the id parameter from the request url
 	id, err := app.readIdParam(r)
 	if err != nil {
@@ -108,4 +108,45 @@ func (app *application) showCompanyHandler(w http.ResponseWriter, r *http.Reques
 	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": &jobs}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+// updateCompanyHandler will update a record based on the ID parameter
+func (app *application) updateCompanyHandler(w http.ResponseWriter, r *http.Request) {
+	// retrieve the id parameter
+	id, err := app.readIdParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+	}
+
+	// fetch the individual record to be updated
+	record, err := app.models.Vendors.GetRecord(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// create a local copy of the company struct which will store the request body
+	var input struct {
+		ID        int64      `json:"-"`                 // Unique integer id for the company
+		Name      string     `json:"company"`           // company name
+		Country   string     `json:"country"`           // Country name
+		Total     int        `json:"total"`             // total amount of job available
+		URL       string     `json:"url"`               // URL location where resource is located
+		CreatedAt *time.Time `json:"created,omitempty"` // created timestamp for the data
+	}
+	if err := app.readJSON(w, r, &input); err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
+	// read the json data from the local input struct into the returned record struct
+	record.Name = input.Name
+	record.Country = input.Country
+	record.Total = input.Total
+	record.URL = input.URL
+
 }
