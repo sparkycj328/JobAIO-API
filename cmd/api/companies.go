@@ -157,7 +157,13 @@ func (app *application) updateCompanyHandler(w http.ResponseWriter, r *http.Requ
 
 	// write the new company struct to our database
 	if err := app.models.Vendors.Update(record); err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
 	// once updated, return the JSON struct to the client making the request
@@ -185,7 +191,7 @@ func (app *application) deleteCompanyHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	// write a JSON response upon successful deletion of the record
-	if err := app.writeJSON(w, http.StatusOK, envelope{"message": "movie successfully updated"}, nil); err != nil {
+	if err := app.writeJSON(w, http.StatusOK, envelope{"message": "record successfully updated"}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 }

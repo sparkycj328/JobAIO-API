@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/sparkycj328/JobAIO-API/internal/validator"
@@ -41,7 +42,12 @@ func (m *VendorModel) Insert(c *Company) error {
 			VALUES ($1, $2, $3, $4)
 			RETURNING id, created_at, version`
 	args := []any{c.Name, c.Country, c.Total, c.URL}
-	return m.DB.QueryRow(query, args...).Scan(&c.ID, &c.CreatedAt, &c.Version)
+
+	// Create a context with a 3-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&c.ID, &c.CreatedAt, &c.Version)
 }
 
 // GetRecord queries our jobs table for an individual row
@@ -61,9 +67,13 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 
 	var record Company
 
+	// Create a context with a 3-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// query for the matching id and based on type of error
 	// return our ErrRecordNotFound error or return other error
-	if err := m.DB.QueryRow(query, id).Scan(
+	if err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&record.ID,
 		&record.CreatedAt,
 		&record.Name,
@@ -92,10 +102,15 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	countries := make([]Company, 0)
 
 	// define the SQL statement
-	query := `SELECT id, created_at, country, amount, url
+	query := `SELECT id, created_at, country, amount, url, version
 		  		FROM jobs
-				WHERE vendor = $1 AND created_at::date = CURRENT_DATE AND amount > 0 ORDER BY country;`
-	rows, err := m.DB.Query(query, vendor)
+				WHERE vendor = $1 AND created_at::date = CURRENT_DATE AND amount > 0 ORDER BY country`
+
+	//
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, vendor)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +123,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 
 		// scan the individual record values for the current row into our local struct
 		// based on type of error, return different error messages
-		if err := rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL); err != nil {
+		if err := rows.Scan(&country.ID, &country.CreatedAt, &country.Country, &country.Total, &country.URL, &country.Version); err != nil {
 			return nil, err
 		}
 		// append the filled struct to our slice of rows queried.
@@ -126,8 +141,8 @@ func (m *VendorModel) Update(c *Company) error {
 	query := `
 			UPDATE jobs
 			SET vendor = $1, country = $2, amount= $3, url= $4, version = version + 1 
-			WHERE id = $5
-			RETURN version
+			WHERE id = $5 and version = $6
+			RETURNING version
 `
 	args := []any{
 		c.Name,
@@ -135,10 +150,23 @@ func (m *VendorModel) Update(c *Company) error {
 		c.Total,
 		c.URL,
 		c.ID,
+		c.Version,
 	}
 
+	// Create a context with a 3-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// execute the query in our jobs table
-	return m.DB.QueryRow(query, args...).Scan(&c.Version)
+	if err := m.DB.QueryRowContext(ctx, query, args...).Scan(&c.Version); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+	return nil
 }
 
 // Delete will delete a record from our jobs table
@@ -152,8 +180,12 @@ func (m *VendorModel) Delete(id int64) error {
 			DELETE FROM jobs
 			WHERE id  = $1
 `
+	// Create a context with a 3-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// we are using DB.EXEC due to not wanting any rows returned
-	result, err := m.DB.Exec(query, id)
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

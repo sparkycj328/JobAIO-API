@@ -9,6 +9,7 @@ import (
 // while retrieving a set of records
 var (
 	ErrRecordNotFound = errors.New("records not found")
+	ErrEditConflict   = errors.New("edit conflict")
 )
 
 // Models wraps the VendorModel struct and will wrap other necessary structs in the future
