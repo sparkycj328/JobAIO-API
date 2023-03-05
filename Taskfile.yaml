@@ -1,0 +1,29 @@
+version: '3'
+
+
+dotenv: ['.envrc']
+
+tasks:
+    run:
+      desc: "Start the webserver by running main.go"
+      cmds:
+        - go run ./cmd/api -dsn=$VENDORS_DB_DSN
+    psql:
+      desc: "Connect to the vendors database"
+      cmds:
+        - psql $VENDORS_DB_DSN
+    up:
+      desc: "Migrate database up"
+      cmds:
+        - echo "Running up migrations..."
+        - migrate -path=migrations -database=$VENDORS_DB_DSN up
+    down:
+      desc: "Migrate database down"
+      cmds:
+        - echo "Running down migrations..."
+        - migrate -path=migrations -database=$VENDORS_DB_DSN down
+    version:
+      desc: "Migrate database down a version"
+      cmds:
+        - echo "Migrating to version 1"
+        - migrate -path=migrations -database=$VENDORS_DB_DSN down 1
