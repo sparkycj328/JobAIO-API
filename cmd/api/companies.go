@@ -149,4 +149,20 @@ func (app *application) updateCompanyHandler(w http.ResponseWriter, r *http.Requ
 	record.Total = input.Total
 	record.URL = input.URL
 
+	// validate that the json data is valid before updating the record in our table
+	v := validator.New()
+	if data.ValidateCompany(v, record); v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+	}
+
+	// write the new company struct to our database
+	if err := app.models.Vendors.Update(record); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+	// once updated, return the JSON struct to the client making the request
+	if err := app.writeJSON(w, http.StatusOK, envelope{"updated": record}, nil); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
 }

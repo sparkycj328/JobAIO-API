@@ -16,7 +16,7 @@ func New() *Validator {
 	return &Validator{Errors: make(map[string]string)}
 }
 
-// Valid returns true if the errors map doe not contain any errors
+// Valid returns true if the errors map does not contain any errors
 func (v *Validator) Valid() bool {
 	return len(v.Errors) == 0
 }

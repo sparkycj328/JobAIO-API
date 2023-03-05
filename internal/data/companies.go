@@ -13,6 +13,7 @@ type Company struct {
 	Country   string     `json:"country"`           // Country name
 	Total     int        `json:"total"`             // total amount of job available
 	URL       string     `json:"url"`               // URL location where resource is located
+	Version   int32      `json:"version"`           // updated each time a record is updated
 	CreatedAt *time.Time `json:"created,omitempty"` // created timestamp for the data
 }
 
@@ -36,7 +37,7 @@ type VendorModel struct {
 // acts as our POST endpoint
 func (m *VendorModel) Insert(c *Company) error {
 	query := `
-			INSERT INTO jobs (vendor, country, amount, url)
+			INSERT INTO jobs (vendor, country, amount, url, version)
 			VALUES ($1, $2, $3, $4)
 			RETURNING id, created_at`
 	args := []any{c.Name, c.Country, c.Total, c.URL}
@@ -121,8 +122,23 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 
 // Update will update the specified records in the job table
 func (m *VendorModel) Update(c *Company) error {
+	// create the prepared statement
+	query := `
+			UPDATE jobs
+			SET vendor = $1, country = $2, amount= $3, url= $4 
+			WHERE id = $5
+			RETURN version
+`
+	args := []any{
+		c.Name,
+		c.Country,
+		c.Total,
+		c.URL,
+		c.ID,
+	}
 
-	return nil
+	// execute the query in our jobs table
+	return m.DB.QueryRow(query, args...).Scan(&c.Version)
 }
 
 func (m *VendorModel) Delete(vendor string) error {

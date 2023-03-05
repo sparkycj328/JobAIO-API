@@ -7,7 +7,13 @@ psql:
 	psql ${VENDORS_DB_DSN}
 
 up:
-	migrate -path=migrations -database=$VENDORS_DB_DSN up
+	@echo 'Running up migrations...'
+	migrate -path=migrations -database=${VENDORS_DB_DSN} up
 
 down:
-	migrate -path=migrations -database=$VENDORS_DB_DSN down
+	@echo 'Running down migrations...'
+	migrate -path=migrations -database=${VENDORS_DB_DSN} down
+
+version:
+	@echo 'Migrating to version 1'
+	migrate -path=migrations -database=${VENDORS_DB_DSN} goto 0
