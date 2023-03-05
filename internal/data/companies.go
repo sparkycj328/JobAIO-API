@@ -37,11 +37,11 @@ type VendorModel struct {
 // acts as our POST endpoint
 func (m *VendorModel) Insert(c *Company) error {
 	query := `
-			INSERT INTO jobs (vendor, country, amount, url, version)
+			INSERT INTO jobs (vendor, country, amount, url)
 			VALUES ($1, $2, $3, $4)
-			RETURNING id, created_at`
+			RETURNING id, created_at, version`
 	args := []any{c.Name, c.Country, c.Total, c.URL}
-	return m.DB.QueryRow(query, args...).Scan(&c.ID, &c.CreatedAt)
+	return m.DB.QueryRow(query, args...).Scan(&c.ID, &c.CreatedAt, &c.Version)
 }
 
 // GetRecord queries our jobs table for an individual row
@@ -125,7 +125,7 @@ func (m *VendorModel) Update(c *Company) error {
 	// create the prepared statement
 	query := `
 			UPDATE jobs
-			SET vendor = $1, country = $2, amount= $3, url= $4 
+			SET vendor = $1, country = $2, amount= $3, url= $4, version = version + 1 
 			WHERE id = $5
 			RETURN version
 `
@@ -141,7 +141,29 @@ func (m *VendorModel) Update(c *Company) error {
 	return m.DB.QueryRow(query, args...).Scan(&c.Version)
 }
 
-func (m *VendorModel) Delete(vendor string) error {
+// Delete will delete a record from our jobs table
+// if the matching record exists
+func (m *VendorModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+	// Create the prepared statement
+	query := `
+			DELETE FROM jobs
+			WHERE id  = $1
+`
+	// we are using DB.EXEC due to not wanting any rows returned
+	result, err := m.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrRecordNotFound
+	}
 
 	return nil
 }

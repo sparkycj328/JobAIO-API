@@ -164,5 +164,28 @@ func (app *application) updateCompanyHandler(w http.ResponseWriter, r *http.Requ
 	if err := app.writeJSON(w, http.StatusOK, envelope{"updated": record}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
 
+// deleteCompany will delete a single record
+func (app *application) deleteCompanyHandler(w http.ResponseWriter, r *http.Request) {
+	// grab the id parameter from the url
+	id, err := app.readIdParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+	}
+	// pass the id parameter to the delete function
+	err = app.models.Vendors.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	// write a JSON response upon successful deletion of the record
+	if err := app.writeJSON(w, http.StatusOK, envelope{"message": "movie successfully updated"}, nil); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
