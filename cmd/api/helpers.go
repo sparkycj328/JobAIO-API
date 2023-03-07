@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sparkycj328/JobAIO-API/internal/validator"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -116,4 +118,40 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 		return errors.New("body must only contain a single JSON value")
 	}
 	return nil
+}
+
+// readString helper returns a string value from the query string
+func (app *application) readString(qs url.Values, key, defaultValue string) string {
+	//grab the desired key from our url query values
+	s := qs.Get(key)
+
+	// determine if the desired key is empty, if so return default value
+	if s == "" {
+		return defaultValue
+	}
+
+	// return the string if not empty
+	return s
+}
+
+// readInt helper method returns an int value from the query string within the URL
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v validator.Validator) int {
+	// Extract the value from the query string
+	s := qs.Get(key)
+
+	// if no key exists with the key name, return the default value
+	if s == "" {
+		return defaultValue
+	}
+
+	// attempt to convert the key value to an integer
+	i, err := strconv.Atoi(s)
+	// if conversion fails, add an error to our validator error map and return default value
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	// if all passes, return the integer value
+	return i
 }
