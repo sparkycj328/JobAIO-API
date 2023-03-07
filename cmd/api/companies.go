@@ -86,6 +86,48 @@ func (app *application) showRecordHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// listCompanyHandler will display the job information for the specified company
+// the api endpoint can receive several query parameters and will filter our table
+// based on these query parameters
+func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Request) {
+	// create a local copy of the company struct which will store the request body
+	var input struct {
+		Name     string
+		Country  string
+		Total    int
+		Page     int
+		PageSize int
+		Sort     string
+	}
+	// initialize a new validator struct
+	v := validator.New()
+
+	// Retrieve the url query parameter map from url.Values
+	qs := r.URL.Query()
+
+	// Retrieve the url query values and store them in our struct
+	input.Name = app.readString(qs, "vendor", "")
+	input.Country = app.readString(qs, "country", "")
+	input.Total = app.readInt(qs, "total", 0, v)
+
+	// get the page and page_size query string values as integers and set
+	// their default values
+	input.Page = app.readInt(qs, "page", 1, v)
+	input.PageSize = app.readInt(qs, "page_size", 50, v)
+
+	// Extract the sort query parameter to sort the database query by
+	// default sort if no sort parameter is provided will sort the query
+	// by the vendor name in ascending order
+	input.Sort = app.readString(qs, "sort", "vendor")
+
+	// Check the Validator error map for any errors added by our app.readInt method
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
+}
+
 // showCompanyHandler will display the job information for the specified company
 func (app *application) showCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	name, err := app.readNameParam(r)

@@ -18,6 +18,8 @@ func (app *application) routes() *httprouter.Router {
 	// register the appropriate methods, URL patterns and handler functions for our
 	// endpoints using the HandlerFunc() method.
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+
+	router.HandlerFunc(http.MethodGet, "/v1/companies", app.listCompanyHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/companies", app.createCompanyHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/companies/:name", app.showCompanyHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/companies/:id", app.updateCompanyHandler)

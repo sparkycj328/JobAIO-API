@@ -135,7 +135,7 @@ func (app *application) readString(qs url.Values, key, defaultValue string) stri
 }
 
 // readInt helper method returns an int value from the query string within the URL
-func (app *application) readInt(qs url.Values, key string, defaultValue int, v validator.Validator) int {
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
 	// Extract the value from the query string
 	s := qs.Get(key)
 
