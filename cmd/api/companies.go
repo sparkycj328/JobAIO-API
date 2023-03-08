@@ -92,12 +92,10 @@ func (app *application) showRecordHandler(w http.ResponseWriter, r *http.Request
 func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Request) {
 	// create a local copy of the company struct which will store the request body
 	var input struct {
-		Name     string
-		Country  string
-		Total    int
-		Page     int
-		PageSize int
-		Sort     string
+		Name    string
+		Country string
+		Total   int
+		data.Filters
 	}
 	// initialize a new validator struct
 	v := validator.New()
@@ -112,16 +110,18 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 
 	// get the page and page_size query string values as integers and set
 	// their default values
-	input.Page = app.readInt(qs, "page", 1, v)
-	input.PageSize = app.readInt(qs, "page_size", 50, v)
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 50, v)
 
 	// Extract the sort query parameter to sort the database query by
 	// default sort if no sort parameter is provided will sort the query
 	// by the vendor name in ascending order
-	input.Sort = app.readString(qs, "sort", "vendor")
+	input.Filters.SortSafeList = []string{"id", "vendor", "amount", "created_at", "country",
+		"-id", "-vendor", "-amount", "-created_at", "-country"}
+	input.Filters.Sort = app.readString(qs, "sort", "vendor")
 
 	// Check the Validator error map for any errors added by our app.readInt method
-	if !v.Valid() {
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 	}
 
