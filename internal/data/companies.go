@@ -93,10 +93,6 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 
 // GetAllRows will be used to grab all rows from the jobs table
 func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filters) (*[]Company, error) {
-	// if vendor string is empty return an error
-	if vendor == "" {
-		return nil, ErrRecordNotFound
-	}
 	// define a slice of company struct which will
 	// be used to store the rows queried
 	countries := make([]Company, 0)
@@ -141,9 +137,6 @@ func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filt
 		return nil, err
 	}
 
-	if len(countries) == 0 {
-		return nil, ErrRecordNotFound
-	}
 	return &countries, nil
 }
 
