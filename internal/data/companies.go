@@ -91,6 +91,62 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 	return &record, nil
 }
 
+// GetAllRows will be used to grab all rows from the jobs table
+func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filters) (*[]Company, error) {
+	// if vendor string is empty return an error
+	if vendor == "" {
+		return nil, ErrRecordNotFound
+	}
+	// define a slice of company struct which will
+	// be used to store the rows queried
+	countries := make([]Company, 0)
+
+	// define the SQL statement
+	query := `SELECT id, created_at, country, amount, url, version
+		  	  FROM jobs
+		      ORDER BY id`
+
+	//
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// iterate through each row returned by our query to the jobs table
+	for rows.Next() {
+		// declare a local instance of our company struct
+		country := Company{}
+
+		// scan the individual record values for the current row into our local struct
+		// based on type of error, return different error messages
+		if err := rows.Scan(
+			&country.ID,
+			&country.CreatedAt,
+			&country.Country,
+			&country.Total,
+			&country.URL,
+			&country.Version,
+		); err != nil {
+			return nil, err
+		}
+		// append the filled struct to our slice of rows queried.
+		countries = append(countries, country)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(countries) == 0 {
+		return nil, ErrRecordNotFound
+	}
+	return &countries, nil
+}
+
 // GetRows will for fetching specific records from the jobs table
 func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	// if vendor string is empty return an error

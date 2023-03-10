@@ -125,7 +125,16 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 		app.failedValidationResponse(w, r, v.Errors)
 	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	// Call the GetAll function in order to grab all rows
+	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Country, input.Total, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": jobs}, nil); err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 // showCompanyHandler will display the job information for the specified company
