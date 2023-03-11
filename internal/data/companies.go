@@ -100,13 +100,14 @@ func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filt
 	// define the SQL statement
 	query := `SELECT id, created_at, country, amount, url, version
 		  	  FROM jobs
+		  	  WHERE (LOWER(vendor) = LOWER($1) OR $1 = ''
 		      ORDER BY id`
 
 	//
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query)
+	rows, err := m.DB.QueryContext(ctx, query, vendor)
 	if err != nil {
 		return nil, err
 	}
