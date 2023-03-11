@@ -92,7 +92,7 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 }
 
 // GetAllRows will be used to grab all rows from the jobs table
-func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filters) (*[]Company, error) {
+func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) (*[]Company, error) {
 	// define a slice of company struct which will
 	// be used to store the rows queried
 	countries := make([]Company, 0)
@@ -100,14 +100,15 @@ func (m *VendorModel) GetAllRows(vendor, country string, total int, filters Filt
 	// define the SQL statement
 	query := `SELECT id, created_at, country, amount, url, version
 		  	  FROM jobs
-		  	  WHERE (LOWER(vendor) = LOWER($1) OR $1 = ''
+		  	  WHERE (LOWER(vendor) = LOWER($1) OR $1 = '')
+		  	  AND (amount > $2)
 		      ORDER BY id`
 
 	//
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, vendor)
+	rows, err := m.DB.QueryContext(ctx, query, vendor, total)
 	if err != nil {
 		return nil, err
 	}

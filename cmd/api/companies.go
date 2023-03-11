@@ -126,7 +126,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Call the GetAll function in order to grab all rows
-	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Country, input.Total, input.Filters)
+	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Total, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
