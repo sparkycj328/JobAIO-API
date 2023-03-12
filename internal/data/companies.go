@@ -92,10 +92,10 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 }
 
 // GetAllRows will be used to grab all rows from the jobs table
-func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) (*[]Company, error) {
+func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) ([]*Company, error) {
 	// define a slice of company struct which will
 	// be used to store the rows queried
-	countries := make([]Company, 0)
+	var jobs []*Company
 
 	// define the SQL statement
 	query := `SELECT id, created_at, country, amount, url, version
@@ -117,7 +117,7 @@ func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) (*[]
 	// iterate through each row returned by our query to the jobs table
 	for rows.Next() {
 		// declare a local instance of our company struct
-		country := Company{}
+		var country Company
 
 		// scan the individual record values for the current row into our local struct
 		// based on type of error, return different error messages
@@ -132,25 +132,25 @@ func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) (*[]
 			return nil, err
 		}
 		// append the filled struct to our slice of rows queried.
-		countries = append(countries, country)
+		jobs = append(jobs, &country)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return &countries, nil
+	return jobs, nil
 }
 
 // GetRows will for fetching specific records from the jobs table
-func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
+func (m *VendorModel) GetRows(vendor string) ([]*Company, error) {
 	// if vendor string is empty return an error
 	if vendor == "" {
 		return nil, ErrRecordNotFound
 	}
 	// define a slice of company struct which will
 	// be used to store the rows queried
-	countries := make([]Company, 0)
+	countries := make([]*Company, 0)
 
 	// define the SQL statement
 	query := `SELECT id, created_at, country, amount, url, version
@@ -185,7 +185,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 			return nil, err
 		}
 		// append the filled struct to our slice of rows queried.
-		countries = append(countries, country)
+		countries = append(countries, &country)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -195,7 +195,7 @@ func (m *VendorModel) GetRows(vendor string) (*[]Company, error) {
 	if len(countries) == 0 {
 		return nil, ErrRecordNotFound
 	}
-	return &countries, nil
+	return countries, nil
 }
 
 // Update will update the specified records in the job table
