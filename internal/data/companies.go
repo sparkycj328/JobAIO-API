@@ -98,9 +98,9 @@ func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) ([]*
 	var jobs []*Company
 
 	// define the SQL statement
-	query := `SELECT id, created_at, country, amount, url, version
+	query := `SELECT id, created_at, vendor, country, amount, url, version
 		  	  FROM jobs
-		  	  WHERE (LOWER(vendor) = LOWER($1) OR $1 = '')
+		  	  WHERE (to_tsvector('simple', vendor) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		  	  AND (amount > $2)
 		      ORDER BY id`
 
@@ -124,6 +124,7 @@ func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) ([]*
 		if err := rows.Scan(
 			&country.ID,
 			&country.CreatedAt,
+			&country.Name,
 			&country.Country,
 			&country.Total,
 			&country.URL,

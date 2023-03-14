@@ -9,3 +9,5 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 
 ALTER TABLE jobs ADD CONSTRAINT jobs_amount_check CHECK (amount >=0);
+
+CREATE INDEX IF NOT EXISTS jobs_vendor_idx ON jobs USING GIN (to_tsvector('simple', vendor));
