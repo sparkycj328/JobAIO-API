@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/sparkycj328/JobAIO-API/internal/validator"
 	"time"
 )
@@ -98,11 +99,11 @@ func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) ([]*
 	var jobs []*Company
 
 	// define the SQL statement
-	query := `SELECT id, created_at, vendor, country, amount, url, version
+	query := fmt.Sprintf(`SELECT id, created_at, vendor, country, amount, url, version
 		  	  FROM jobs
-		  	  WHERE (to_tsvector('simple', vendor) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		  	  WHERE (to_tsvector('simple', vendor) @@ plainto_tsqsuery('simple', $1) OR $1 = '')
 		  	  AND (amount > $2)
-		      ORDER BY id`
+		      ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
 
 	//
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
