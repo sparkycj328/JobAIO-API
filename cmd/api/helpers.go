@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // alphaNumeric will check the URL query parameter to ensure only alphanumeric characters are present
@@ -132,6 +133,28 @@ func (app *application) readString(qs url.Values, key, defaultValue string) stri
 
 	// return the string if not empty
 	return s
+}
+
+// readDate helper method returns a time.Time value from the query string within the url matching the date parameter
+func (app *application) readDate(qs url.Values, key string, defaultValue time.Time, v *validator.Validator) time.Time {
+	// Extract the value from the query string
+	s := qs.Get(key)
+
+	// return the default value if the query parameter is empty
+	if s == "" {
+		return defaultValue
+	}
+
+	// declare the date format and parse it
+	const shortForm = "2006-Jan-02"
+	i, err := time.Parse(shortForm, s)
+	if err != nil {
+		v.AddError(key, "must be in the format of 2006-Jan-02")
+		return defaultValue
+	}
+
+	// if validation passes return the parsed time value
+	return i
 }
 
 // readInt helper method returns an int value from the query string within the URL

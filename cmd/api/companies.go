@@ -95,6 +95,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 		Name    string
 		Country string
 		Total   int
+		Date    time.Time
 		data.Filters
 	}
 	// initialize a new validator struct
@@ -107,6 +108,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	input.Name = app.readString(qs, "vendor", "")
 	input.Country = app.readString(qs, "country", "")
 	input.Total = app.readInt(qs, "total", 0, v)
+	input.Date = app.readDate(qs, "date", time.Now(), v)
 
 	// get the page and page_size query string values as integers and set
 	// their default values
@@ -127,7 +129,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Call the GetAll function in order to grab all rows
-	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Total, input.Filters)
+	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Total, input.Date, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

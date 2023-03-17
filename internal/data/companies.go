@@ -10,8 +10,8 @@ import (
 )
 
 type Company struct {
-	ID        int64      `json:"-"`                 // Unique integer id for the company
-	Name      string     `json:"company,omitempty"` // company name
+	ID        int64      `json:"id"`                // Unique integer id for the company
+	Name      string     `json:"company"`           // company name
 	Country   string     `json:"country"`           // Country name
 	Total     int        `json:"total"`             // total amount of job available
 	URL       string     `json:"url"`               // URL location where resource is located
@@ -93,25 +93,26 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 }
 
 // GetAllRows will be used to grab all rows from the jobs table
-func (m *VendorModel) GetAllRows(vendor string, total int, filters Filters) ([]*Company, error) {
+func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, filters Filters) ([]*Company, error) {
 	// define a slice of company struct which will
 	// be used to store the rows queried
-	var jobs []*Company
+	jobs := []*Company{}
 
 	// define the SQL statement
-	query := fmt.Sprintf(`SELECT id, created_at, vendor, country, amount, url, version
-		  	  FROM jobs
-		  	  WHERE (to_tsvector('simple', vendor) @@ plainto_tsquery('simple', $1) OR $1 = '')
-		  	  AND (amount > $2)
-		      ORDER BY %s %s, id ASC
-		      LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+	query := fmt.Sprintf(`
+		SELECT id, created_at, vendor, country, amount, url, version
+		FROM jobs
+		WHERE (to_tsvector('simple', vendor) @@ plainto_tsquery('simple', $1) OR $1 = '')
+		AND (amount > $2)
+		AND created_at::date = $3
+		ORDER BY %s %s, id ASC
+		LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 
-	//
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	// place arguments into a slice as they amount is increasing
-	args := []any{vendor, total, filters.limit(), filters.offset()}
+	args := []any{vendor, total, created, filters.limit(), filters.offset()}
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
