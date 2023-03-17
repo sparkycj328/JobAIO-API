@@ -111,7 +111,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	// get the page and page_size query string values as integers and set
 	// their default values
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
-	input.Filters.PageSize = app.readInt(qs, "page_size", 50, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 
 	// Extract the sort query parameter to sort the database query by
 	// default sort if no sort parameter is provided will sort the query
@@ -123,6 +123,7 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	// Check the Validator error map for any errors added by our app.readInt method
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
+		return
 	}
 
 	// Call the GetAll function in order to grab all rows
