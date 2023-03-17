@@ -93,14 +93,15 @@ func (m *VendorModel) GetRecord(id int64) (*Company, error) {
 }
 
 // GetAllRows will be used to grab all rows from the jobs table
-func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, filters Filters) ([]*Company, error) {
+func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, filters Filters) ([]*Company, Metadata, error) {
 	// define a slice of company struct which will
-	// be used to store the rows queried
+	// be used to store the rows queried and a nil value for totalRecords
+	totalRecords := 0
 	jobs := []*Company{}
 
 	// define the SQL statement
 	query := fmt.Sprintf(`
-		SELECT id, created_at, vendor, country, amount, url, version
+		SELECT count(*) OVER(), id, created_at, vendor, country, amount, url, version
 		FROM jobs
 		WHERE (to_tsvector('simple', vendor) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		AND (amount > $2)
@@ -116,7 +117,7 @@ func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, fi
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	defer rows.Close()
 
@@ -128,6 +129,7 @@ func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, fi
 		// scan the individual record values for the current row into our local struct
 		// based on type of error, return different error messages
 		if err := rows.Scan(
+			&totalRecords,
 			&country.ID,
 			&country.CreatedAt,
 			&country.Name,
@@ -136,17 +138,19 @@ func (m *VendorModel) GetAllRows(vendor string, total int, created time.Time, fi
 			&country.URL,
 			&country.Version,
 		); err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 		// append the filled struct to our slice of rows queried.
 		jobs = append(jobs, &country)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
-	return jobs, nil
+	// Generate the metadata struct
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	return jobs, metadata, nil
 }
 
 // GetRows will for fetching specific records from the jobs table

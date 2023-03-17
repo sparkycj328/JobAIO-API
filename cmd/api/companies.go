@@ -129,13 +129,13 @@ func (app *application) listCompanyHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Call the GetAll function in order to grab all rows
-	jobs, err := app.models.Vendors.GetAllRows(input.Name, input.Total, input.Date, input.Filters)
+	jobs, metadata, err := app.models.Vendors.GetAllRows(input.Name, input.Total, input.Date, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	if err := app.writeJSON(w, http.StatusOK, envelope{"jobs": jobs}, nil); err != nil {
+	if err := app.writeJSON(w, http.StatusOK, envelope{"metadata": metadata, "jobs": jobs}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 }
