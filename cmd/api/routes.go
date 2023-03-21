@@ -6,7 +6,7 @@ import (
 )
 
 // routes returns a httprouter.Router and sets the appropriate endpoints with each method
-func (app *application) routes() *httprouter.Router {
+func (app *application) routes() http.Handler {
 
 	// Initialize a new httprouter interface
 	router := httprouter.New()
@@ -26,5 +26,5 @@ func (app *application) routes() *httprouter.Router {
 	router.HandlerFunc(http.MethodDelete, "/v1/companies/:id", app.deleteCompanyHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/record/:id", app.showRecordHandler)
 
-	return router
+	return app.recoverPanic(router)
 }
