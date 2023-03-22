@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/time/rate"
+	"net"
 	"net/http"
+	"sync"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -26,6 +29,47 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 				app.serverErrorResponse(w, r, fmt.Errorf("%s", err))
 			}
 		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// rateLimit will use golang's x/time/rate to declare a new limiter and then use
+// this limiter upon each request handled by the http client
+func (app *application) rateLimit(next http.Handler) http.Handler {
+	var (
+		mu      sync.Mutex
+		clients = map[string]*rate.Limiter{}
+	)
+
+	// return an http handler which wraps around each request through the http client
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// grab the ip address completing the request
+		// return a server error if unable to read the IP address
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		// Lock the mutex to prevent concurrent writing to the clients map
+		mu.Lock()
+
+		// Check if the ip address already exists in the map
+		// if it does not exist, add a new limiter to the clients map
+		if _, found := clients[ip]; !found {
+			clients[ip] = rate.NewLimiter(2, 4)
+		}
+
+		// if the request isn't allowed, unlock the mutex and send a 429 Too Many Requests
+		// response, mutex will be unlocked before sending the 429 response
+		if !clients[ip].Allow() {
+			mu.Unlock()
+			app.rateLimitExceeded(w, r)
+			return
+		}
+
+		// unlock the mutex before calling the next handler in the chain
+		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }

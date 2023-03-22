@@ -67,3 +67,9 @@ func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Requ
 	message := "unable to update the record due to an edit conflict, please try again"
 	app.errorResponse(w, r, http.StatusConflict, message)
 }
+
+// rateLimitExceeded will send a message if a client IP has been rate limited
+func (app *application) rateLimitExceeded(w http.ResponseWriter, r *http.Request) {
+	message := "rate limit exceeded"
+	app.errorResponse(w, r, http.StatusTooManyRequests, message)
+}
