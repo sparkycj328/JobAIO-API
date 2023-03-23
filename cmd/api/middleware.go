@@ -69,37 +69,41 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	}()
 	// return an http handler which wraps around each request through the http client
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// grab the ip address completing the request
-		// return a server error if unable to read the IP address
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			app.serverErrorResponse(w, r, err)
-			return
-		}
+		// only carry out the check if rate limiting is enabled
+		if app.config.limiter.enabled {
+			// grab the ip address completing the request
+			// return a server error if unable to read the IP address
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				app.serverErrorResponse(w, r, err)
+				return
+			}
 
-		// Lock the mutex to prevent concurrent writing to the clients map
-		mu.Lock()
+			// Lock the mutex to prevent concurrent writing to the clients map
+			mu.Lock()
 
-		// Check if the ip address already exists in the map
-		// if it does not exist, add a new limiter to the clients map
-		if _, found := clients[ip]; !found {
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-		}
+			// Check if the ip address already exists in the map
+			// if it does not exist, add a new limiter to the clients map
+			if _, found := clients[ip]; !found {
+				clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst)}
+			}
 
-		// Update the last seen time for the client.
-		clients[ip].lastSeen = time.Now()
+			// Update the last seen time for the client.
+			clients[ip].lastSeen = time.Now()
 
-		// if the request isn't allowed, unlock the mutex and send a 429 Too Many Requests
-		// response, mutex will be unlocked before sending the 429 response
-		if !clients[ip].limiter.Allow() {
+			// if the request isn't allowed, unlock the mutex and send a 429 Too Many Requests
+			// response, mutex will be unlocked before sending the 429 response
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				app.rateLimitExceeded(w, r)
+				return
+			}
+
+			// unlock the mutex before calling the next handler in the chain
 			mu.Unlock()
-			app.rateLimitExceeded(w, r)
-			return
+
 		}
-
-		// unlock the mutex before calling the next handler in the chain
-		mu.Unlock()
-
 		next.ServeHTTP(w, r)
 	})
+
 }
