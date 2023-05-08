@@ -15,11 +15,13 @@ var (
 // Models wraps the VendorModel struct and will wrap other necessary structs in the future
 type Models struct {
 	Vendors VendorModel
+	Users   UserModel
 }
 
-// NewModel returns a Models struct containing the initialized VendorModel
+// NewModel returns a Models struct containing the initialized VendorModel and UsersModel
 func NewModel(db *sql.DB) Models {
 	return Models{
 		Vendors: VendorModel{DB: db},
+		Users:   UserModel{DB: db},
 	}
 }
