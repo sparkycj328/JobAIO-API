@@ -7,7 +7,7 @@ tasks:
     run:
       desc: "Start the webserver by running main.go"
       cmds:
-        - go run ./cmd/api -dsn=$VENDORS_DB_DSN
+        - go run ./cmd/api -dsn=$VENDORS_DB_DSN -smtp-username=$SMTP_USERNAME-smtp-password=$SMTP_PASSWORD
     psql:
       desc: "Connect to the vendors database"
       cmds:
