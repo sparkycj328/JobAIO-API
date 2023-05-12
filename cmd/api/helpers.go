@@ -181,8 +181,13 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 
 // background is a helper function that accepts an arbitrary function as a parameter
 func (app *application) background(fn func()) {
+
+	app.wg.Add(1)
+
 	// Launch a background routine
 	go func() {
+		defer app.wg.Done()
+
 		defer func() {
 			if err := recover(); err != nil {
 				app.logger.PrintError(fmt.Errorf("%s", err), nil)

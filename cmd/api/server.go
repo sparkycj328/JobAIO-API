@@ -51,7 +51,16 @@ func (app *application) serve() error {
 		// call the shutdown function, passing it the context to initiate graceful shutdown
 		// if the error returns nil then graceful shutdown was successful, otherwise
 		// the server had issues closing open connections, or it exceeded the 20-second timeout
-		shutdownError <- srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		app.logger.PrintInfo("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+		app.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	// Log a startup message and start the server as normal
