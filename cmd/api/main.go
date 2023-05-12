@@ -8,6 +8,7 @@ import (
 	"github.com/sparkycj328/JobAIO-API/internal/jsonlog"
 	"github.com/sparkycj328/JobAIO-API/internal/mailer"
 	"os"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -46,6 +47,7 @@ type application struct {
 	logger *jsonlog.Logger
 	models data.Models
 	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {

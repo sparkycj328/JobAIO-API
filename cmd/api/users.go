@@ -66,12 +66,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	// Call the send method on our Mailer, passing in the user's email address,
 	// name of the template file, and the User struct containing the new user's data.
-	go func() {
+	app.background(func() {
 		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
-	}()
+	})
 
 	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
