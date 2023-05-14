@@ -16,6 +16,7 @@ var (
 type Models struct {
 	Vendors VendorModel
 	Users   UserModel
+	Tokens  TokenModel
 }
 
 // NewModel returns a Models struct containing the initialized VendorModel and UsersModel
@@ -23,5 +24,6 @@ func NewModel(db *sql.DB) Models {
 	return Models{
 		Vendors: VendorModel{DB: db},
 		Users:   UserModel{DB: db},
+		Tokens:  TokenModel{DB: db},
 	}
 }
